@@ -40,10 +40,8 @@ import shutil
 FILENAME_FINISHED = 'instance-out.sql'
 
 NEW_FILE_PATTERNS = {
- 'instance.idf': 'results/IDF_files/{techid}&{cohort}&{cz}.idf',
- 'instance-var.csv': 'results/CSV_files/{techid}&{cohort}&{cz}.csv',
- 'instance-out.sql': 'results/SQLite_files/{techid}&{cohort}&{cz}.db',
- 'instance-tbl.htm': 'results/HTM_files/{techid}&{cohort}&{cz}.htm',
+ 'instance.idf': 'results/IDF_files/{cohort}.{cz}.{bldgvint}.{techid}.idf',
+ 'instance-var.csv': 'results/CSV_files/{cohort}.{cz}.{bldgvint}.{techid}.csv',
 }
 
 def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=False):
@@ -74,23 +72,33 @@ def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=Fal
                 for patternfrom, patternto in NEW_FILE_PATTERNS.items():
                     filefrom = f1.parent.joinpath(patternfrom)
                     relpath = filefrom.relative_to(root)
-                    # E.g. relpath = SFm_Furnace_1975\runs\CZ01\SFm&1&rDXGF&Ex&SpaceHtg_eq__GasFurnace\Msr-Res-GasFurnace-AFUE95-ECM\instance-out.sql
+                    # In 2023, residential models would be found like this:
+                    # relpath = "SFm_Furnace_1975\runs\CZ01\SFm&1&rDXGF&Ex&SpaceHtg_eq__GasFurnace\Msr-Res-GasFurnace-AFUE95-ECM\instance-out.sql
+                    #meas_group, _, cz, cohort, techid, _ = relpath.parts
+                    #_, bldgvint = meas_group.rsplit("_", 1)
+
+                    # In 2024, commercial models would be found like this:
+                    # relpath = "SWXX000-00 Measure Name_1975\runs\CZ01\Asm\defaults\instance-out.sql"
+                    meas_group_vintage_combo, _, cz, cohort, techid, _ = relpath.parts
+                    meas_group, bldgvint = meas_group_vintage_combo.rsplit("_", 1)
+
                     #print(relpath.parts)
-                    meas_group, _, cz, cohort, techid, _ = relpath.parts
                     #print(meas_group, cz, cohort, techid)
-                    
+                    #print(meas_group, bldgvint, cz, cohort, techid)
+
                     # Copy the file
                     # to-do
-                    fileto = Path(patternto.format(meas_group=meas_group, cz=cz, cohort=cohort, techid=techid))
+                    fileto = Path(patternto.format(meas_group=meas_group, cz=cz, cohort=cohort, bldgvint=bldgvint, techid=techid))
                     if not progressbar:
                         print(fileto)
-                    
+
                     dryrun = False
                     if dryrun:
                         pass
                     else:
-                        fileto.parent.mkdir(parents=True,exist_ok=True)
-                        shutil.copy(filefrom, fileto)
+                        if filefrom.exists():
+                            fileto.parent.mkdir(parents=True,exist_ok=True)
+                            shutil.copy(filefrom, fileto)
 
             if progressbar:
                 myiter.close()
