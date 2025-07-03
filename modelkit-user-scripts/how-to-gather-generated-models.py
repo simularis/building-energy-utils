@@ -42,6 +42,7 @@ FILENAME_FINISHED = 'instance-out.sql'
 NEW_FILE_PATTERNS = {
  'instance.idf': 'results/IDF_files/{cohort}.{cz}.{bldgvint}.{techid}.idf',
  'instance-var.csv': 'results/CSV_files/{cohort}.{cz}.{bldgvint}.{techid}.csv',
+ 'instance-out.sql': 'results/SQL_files/{cohort}.{cz}.{bldgvint}.{techid}.sql',
 }
 
 def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=False):
