@@ -28,7 +28,7 @@ Example output:
             Msr-Res-GasFurnace-AFUE95-ECM&SFm&1&rDXGF&Ex&SpaceHtg_eq__GasFurnace&CZ16.idf
 
 @Author: Nicholas Fette <nfette@solaris-technical.com>
-@Date: 2023-09-21
+@Date: 2023-09-21, updated 2024-05-01
 """
 
 import glob
@@ -40,9 +40,11 @@ import shutil
 FILENAME_FINISHED = 'instance-out.sql'
 
 NEW_FILE_PATTERNS = {
- 'instance.idf': 'results/IDF_files/{cohort}.{cz}.{bldgvint}.{techid}.idf',
- 'instance-var.csv': 'results/CSV_files/{cohort}.{cz}.{bldgvint}.{techid}.csv',
- 'instance-out.sql': 'results/SQL_files/{cohort}.{cz}.{bldgvint}.{techid}.sql',
+ 'instance.idf': 'results/IDF_files/{cohort_clean}.{cz}.{bldgvint}.{techid}.idf',
+ 'instance-tbl.htm': 'results/HTM_files/{cohort_clean}.{cz}.{bldgvint}.{techid}.htm',
+ 'instance-out.sql': 'results/SQLite_files/{cohort_clean}.{cz}.{bldgvint}.{techid}.sqlite',
+ 'instance-var.csv': 'results/CSV_files/{cohort_clean}.{cz}.{bldgvint}.{techid}.csv',
+ 'instance-out.err': 'results/ERR_files/{cohort_clean}.{cz}.{bldgvint}.{techid}.err',
 }
 
 def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=False):
@@ -81,6 +83,7 @@ def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=Fal
                     # In 2024, commercial models would be found like this:
                     # relpath = "SWXX000-00 Measure Name_1975\runs\CZ01\Asm\defaults\instance-out.sql"
                     meas_group_vintage_combo, _, cz, cohort, techid, _ = relpath.parts
+                    cohort_clean = cohort.replace("&","=")
                     meas_group, bldgvint = meas_group_vintage_combo.rsplit("_", 1)
 
                     #print(relpath.parts)
@@ -89,7 +92,9 @@ def gather_generated_models(root, gather_patterns, progressbar=False, dryrun=Fal
 
                     # Copy the file
                     # to-do
-                    fileto = Path(patternto.format(meas_group=meas_group, cz=cz, cohort=cohort, bldgvint=bldgvint, techid=techid))
+                    fileto = Path(patternto.format(
+                        meas_group=meas_group, cz=cz, cohort=cohort, bldgvint=bldgvint, techid=techid,
+                        cohort_clean=cohort_clean))
                     if not progressbar:
                         print(fileto)
 
