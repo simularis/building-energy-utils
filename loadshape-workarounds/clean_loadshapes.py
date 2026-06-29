@@ -19,16 +19,20 @@ To use this script:
       The script will print the input column names and raise an error if the input columns do not match the expected list.
     5. If the script raises an error message, copy the list of input column names
       into the variable expected_input_columns for reference.
+
+@Author: Nicholas Fette and Yasemin Agi
+@Date: 2026-06-29
+
 """
 
 import zipfile
 import pandas
 import sqlite3
 import os
-
+import Path from pathlib
 
 def clean_loadshapes_zip(zip_filename,
-                         output_zip_filename='cleaned_loadshapes.zip',
+                         output_dir=Path('cleaned_loadshapes'),
                          query_exclusions='',
                          query_transformation='SELECT * FROM loadshapes_long'
                          ):
@@ -37,7 +41,7 @@ def clean_loadshapes_zip(zip_filename,
     
     Args:
         zip_filename: Path to the input ZIP file containing CSV data
-        output_zip_filename: Path for the output ZIP file (default: 'cleaned_loadshapes.zip')
+        output_dir: Directory for the output ZIP files (default: 'cleaned_loadshapes')
     """
     
     # Extract CSV from ZIP file
@@ -78,26 +82,27 @@ def clean_loadshapes_zip(zip_filename,
     conn.execute(statement_create_view)
 
     # Read cleaned data back from SQLite
-    df2 = pandas.read_sql('select * from loadshapes_long_cleaned;', conn)
+    chunks = pandas.read_sql('select * from loadshapes_long_cleaned;', conn, chunksize=500*8760)
+    for i,df2 in enumerate(chunks):
+
+        print(f"Cleaned data shape: {df2.shape}")
+        print(f"Output columns: {df2.columns.tolist()}")
+        if set(expected_output_columns) - set(df2.columns):
+            raise ValueError(f"Output columns do not match expected columns. Found: {df2.columns.tolist()}, Expected: {expected_output_columns}")
+
+        # Write cleaned data to new ZIP file
+        # Use the original CSV filename (without path)
+        output_csv_filename = f"{os.path.basename(csv_filename)}_clean_{i+1}.csv"
+        df2.to_csv(output_csv_filename, index=False)
+        output_zip_filename = output_dir / f"{os.path.basename(csv_filename)}_clean_{i+1}.zip"
+        with zipfile.ZipFile(output_zip_filename, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as output_zip:    
+            output_zip.write(output_csv_filename)
+        # Clean up temporary CSV file
+        os.remove(output_csv_filename)
+        
+        print(f"Cleaned data written to {output_zip_filename}")
     conn.close()
     
-    print(f"Cleaned data shape: {df2.shape}")
-    print(f"Output columns: {df2.columns.tolist()}")
-    if set(expected_output_columns) - set(df2.columns):
-        raise ValueError(f"Output columns do not match expected columns. Found: {df2.columns.tolist()}, Expected: {expected_output_columns}")
-
-    # Write cleaned data to new ZIP file
-    # Use the original CSV filename (without path)
-    output_csv_filename = os.path.basename(csv_filename)
-    df2.to_csv(output_csv_filename, index=False)
-    
-    with zipfile.ZipFile(output_zip_filename, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as output_zip:    
-        output_zip.write(output_csv_filename)
-    
-    # Clean up temporary CSV file
-    os.remove(output_csv_filename)
-    
-    print(f"Cleaned data written to {output_zip_filename}")
 
 if __name__ == '__main__':
     # Step 1. Modify the input filename(s) as needed
@@ -126,14 +131,17 @@ if __name__ == '__main__':
     # In each row of the query, the left side is the input and the right side is the output.
     # To take an input from an existing column, enter the column name in double quotes, e.g. "Sector".
     # To enter a constant value, enter the value in single quotes, e.g. 'Cap-Tons'.
+    # Comment text on each line after a double dash is ignored.
     query_transformation = f"""SELECT
     "Sector" AS "Sector",
     "BldgType" AS "BldgType",
     "BldgVint" AS "BldgVint",
-    'rDXHP' AS "BldgHVAC",
+    "BldgHVAC" AS "BldgHVAC", -- customize to match measure case BldgHVAC
     "BldgLoc" AS "BldgLoc",
-    'Cap-Tons' AS "NormUnit",
-    "Type (Whole Building or End Use)" AS "Type (Whole Building or End Use)",
+    "NormUnit" AS "NormUnit", -- use this line if the input CSV already has a column named "NormUnit"
+    -- 'Cap-Tons' AS "NormUnit", -- uncomment this line if the input CSV does not have a column named "NormUnit"
+    "Type (Whole Building or End Use)" AS "Type (Whole Building or End Use)", -- use this line if the input CSV already has the column
+    -- "Type" AS "Type (Whole Building or End Use)", -- uncomment this line if "Type" column needs to be renamed in output
     "Source Year" AS "Source Year",
     "TechGroup" AS "TechGroup",
     "TechType" AS "TechType",
@@ -141,17 +149,18 @@ if __name__ == '__main__':
     "Hour of Year" AS "Hour of Year",
     "UECproportion" AS "UECproportion"
     FROM loadshapes_long
+    ORDER BY "BldgType", "BldgVint", "BldgHVAC", "BldgLoc", "TechID", "Hour of Year"
     """
 
-# (YA) Modified 
+    # (YA) Modified 
 
-for input_zip in input_zips:
-    if os.path.exists(input_zip):
-        clean_loadshapes_zip(
-            zip_filename=input_zip,
-            output_zip_filename=f"cleaned_{input_zip}",
-            query_exclusions=query_exclusions,
-            query_transformation=query_transformation
-        )
-    else:
-        print(f"Error: {input_zip} not found")
+    for input_zip in input_zips:
+        if os.path.exists(input_zip):
+            clean_loadshapes_zip(
+                zip_filename=input_zip,
+                output_dir=Path('cleaned_loadshapes'),
+                query_exclusions=query_exclusions,
+                query_transformation=query_transformation
+            )
+        else:
+            print(f"Error: {input_zip} not found")
