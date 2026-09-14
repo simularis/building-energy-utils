@@ -97,8 +97,8 @@ def gather_batch_stats(
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('simfolder', type=Path, default='.')
-    parser.add_argument('output_file', type=Path, default='simulation_stats.csv')
+    parser.add_argument('simfolder', type=Path, default='.', nargs='?')
+    parser.add_argument('output_file', type=Path, default='simulation_stats.csv', nargs='?')
 
     args = parser.parse_args()
     
