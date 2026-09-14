@@ -4,7 +4,6 @@ from pathlib import Path
 from tqdm import tqdm
 import pandas
 import re
-import sqlite3
 from argparse import ArgumentParser
 
 def gather_batch_stats(
