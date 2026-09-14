@@ -123,3 +123,6 @@ def main():
 
     # Print a count of runs that left behind a temporary directory (should have been deleted by modelkit)
     print("Number of runs that left behind a temporary directory:", len(stats[stats['hastempdir']==True]))
+
+if __name__ == "__main__":
+    main()
