@@ -52,7 +52,7 @@ def gather_batch_stats(
                 else:
                     # Match for a line at the beginning of the file like this:
                     # Program Version,EnergyPlus, Version 9.5.0-de239b2e5f, YMD=2025.07.29 19:21,
-                    content = fileerr.read_text().splitlines()
+                    content = fileerr.read_text(errors="replace").splitlines()
                     firstline = content[0]
                     m = re.search(r'YMD=(?P<timestamp>[^,]*)',firstline)
                     if not m:
