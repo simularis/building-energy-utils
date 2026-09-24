@@ -13,7 +13,7 @@ To use this script:
     1. Modify the input filename in the main block at the bottom of this script.
     2. Modify the query_exclusions variable to remove any TechID/BldgLoc
       combinations that should be excluded from the output.
-    3. Modify the query_transformation variable to rename columns and add any
+    3. Modify the query_transformation variable to rename columns, filter TechIDs, and add any
       additional columns as needed.
     4. Run this script to create a new ZIP file containing the cleaned CSV data.
       The script will print the input column names and raise an error if the input columns do not match the expected list.
@@ -149,10 +149,9 @@ if __name__ == '__main__':
     "Hour of Year" AS "Hour of Year",
     "UECproportion" AS "UECproportion"
     FROM loadshapes_long
+    -- WHERE "TechID" IN ('') -- uncomment this line to filter certain TechIDs
     ORDER BY "BldgType", "BldgVint", "BldgHVAC", "BldgLoc", "TechID", "Hour of Year"
     """
-
-    # (YA) Modified 
 
     for input_zip in input_zips:
         if os.path.exists(input_zip):
