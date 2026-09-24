@@ -29,7 +29,7 @@ import zipfile
 import pandas
 import sqlite3
 import os
-import Path from pathlib
+from pathlib import Path
 
 def clean_loadshapes_zip(zip_filename,
                          output_dir=Path('cleaned_loadshapes'),
@@ -43,7 +43,9 @@ def clean_loadshapes_zip(zip_filename,
         zip_filename: Path to the input ZIP file containing CSV data
         output_dir: Directory for the output ZIP files (default: 'cleaned_loadshapes')
     """
-    
+    # Create output folder
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     # Extract CSV from ZIP file
     df1 = None
     csv_filename = None
@@ -116,7 +118,7 @@ if __name__ == '__main__':
     query_exclusions = """
 
     """
-    
+
     # Enter list of assumed column names in the input file to raise an error if the assumption is wrong.
     expected_input_columns = ['Sector', 'BldgType', 'BldgVint', 'BldgHVAC', 'BldgLoc',
         'Type (Whole Building or End Use)', 'Source Year', 'TechGroup',
@@ -132,6 +134,7 @@ if __name__ == '__main__':
     # To take an input from an existing column, enter the column name in double quotes, e.g. "Sector".
     # To enter a constant value, enter the value in single quotes, e.g. 'Cap-Tons'.
     # Comment text on each line after a double dash is ignored.
+
     query_transformation = f"""SELECT
     "Sector" AS "Sector",
     "BldgType" AS "BldgType",
