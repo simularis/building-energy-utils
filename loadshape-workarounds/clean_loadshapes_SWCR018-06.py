@@ -23,6 +23,7 @@ To use this script:
 @Author: Nicholas Fette and Yasemin Agi
 @Date: 2026-06-29
 
+2026-09-25 NF - Customized for SWCR018-06, assuming input data file(s) from SWCR015
 """
 
 import zipfile
@@ -109,14 +110,12 @@ def clean_loadshapes_zip(zip_filename,
 if __name__ == '__main__':
     # Step 1. Modify the input filename(s) as needed
     input_zips = [
-        'CEDARS_LoadShape_DMo.zip', 
-        'CEDARS_LoadShape_MFm.zip',
-        'CEDARS_LoadShape_SFm.zip'
+        'CEDARS_LoadShape_Gro.zip'
     ]
 
     # Step 2. Modify this query based on TechID & BldgLoc exclusions specific to the measure.
     query_exclusions = """
-    --DELETE FROM loadshapes_long WHERE TechID not in ('');
+    DELETE FROM loadshapes_long WHERE TechID not in ('NE-Ref_Storage-VertDisplay-Glassdoor-LED-AirCond','NE-Ref_Storage-VertDisplay-Glassdoor-LED-EvapCond');
     """
 
     # Enter list of assumed column names in the input file to raise an error if the assumption is wrong.
@@ -141,13 +140,13 @@ if __name__ == '__main__':
     "BldgVint" AS "BldgVint",
     "BldgHVAC" AS "BldgHVAC", -- customize to match measure case BldgHVAC
     "BldgLoc" AS "BldgLoc",
-    "NormUnit" AS "NormUnit", -- use this line if the input CSV already has a column named "NormUnit"
+    'Each' AS "NormUnit", -- use this line if the input CSV already has a column named "NormUnit"
     -- 'Cap-Tons' AS "NormUnit", -- uncomment this line if the input CSV does not have a column named "NormUnit"
     "Type (Whole Building or End Use)" AS "Type (Whole Building or End Use)", -- use this line if the input CSV already has the column
     -- "Type" AS "Type (Whole Building or End Use)", -- uncomment this line if "Type" column needs to be renamed in output
     "Source Year" AS "Source Year",
-    "TechGroup" AS "TechGroup",
-    "TechType" AS "TechType",
+    'Ref_Storage' AS "TechGroup",
+    'ReachIn' AS "TechType",
     "TechID" AS "TechID",
     "Hour of Year" AS "Hour of Year",
     "UECproportion" AS "UECproportion"
