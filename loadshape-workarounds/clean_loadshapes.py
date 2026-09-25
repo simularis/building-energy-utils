@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # Step 2. Modify this query based on TechID & BldgLoc exclusions specific to the measure.
     query_exclusions = """
-
+    --DELETE FROM loadshapes_long WHERE TechID not in ('');
     """
 
     # Enter list of assumed column names in the input file to raise an error if the assumption is wrong.
