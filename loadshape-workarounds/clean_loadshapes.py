@@ -13,7 +13,7 @@ To use this script:
     1. Modify the input filename in the main block at the bottom of this script.
     2. Modify the query_exclusions variable to remove any TechID/BldgLoc
       combinations that should be excluded from the output.
-    3. Modify the query_transformation variable to rename columns and add any
+    3. Modify the query_transformation variable to rename columns, filter TechIDs, and add any
       additional columns as needed.
     4. Run this script to create a new ZIP file containing the cleaned CSV data.
       The script will print the input column names and raise an error if the input columns do not match the expected list.
@@ -29,7 +29,7 @@ import zipfile
 import pandas
 import sqlite3
 import os
-import Path from pathlib
+from pathlib import Path
 
 def clean_loadshapes_zip(zip_filename,
                          output_dir=Path('cleaned_loadshapes'),
@@ -43,7 +43,9 @@ def clean_loadshapes_zip(zip_filename,
         zip_filename: Path to the input ZIP file containing CSV data
         output_dir: Directory for the output ZIP files (default: 'cleaned_loadshapes')
     """
-    
+    # Create output folder
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     # Extract CSV from ZIP file
     df1 = None
     csv_filename = None
@@ -114,9 +116,9 @@ if __name__ == '__main__':
 
     # Step 2. Modify this query based on TechID & BldgLoc exclusions specific to the measure.
     query_exclusions = """
-
+    --DELETE FROM loadshapes_long WHERE TechID not in ('');
     """
-    
+
     # Enter list of assumed column names in the input file to raise an error if the assumption is wrong.
     expected_input_columns = ['Sector', 'BldgType', 'BldgVint', 'BldgHVAC', 'BldgLoc',
         'Type (Whole Building or End Use)', 'Source Year', 'TechGroup',
@@ -132,6 +134,7 @@ if __name__ == '__main__':
     # To take an input from an existing column, enter the column name in double quotes, e.g. "Sector".
     # To enter a constant value, enter the value in single quotes, e.g. 'Cap-Tons'.
     # Comment text on each line after a double dash is ignored.
+
     query_transformation = f"""SELECT
     "Sector" AS "Sector",
     "BldgType" AS "BldgType",
@@ -149,10 +152,9 @@ if __name__ == '__main__':
     "Hour of Year" AS "Hour of Year",
     "UECproportion" AS "UECproportion"
     FROM loadshapes_long
+    -- WHERE "TechID" IN ('') -- uncomment this line to filter certain TechIDs
     ORDER BY "BldgType", "BldgVint", "BldgHVAC", "BldgLoc", "TechID", "Hour of Year"
     """
-
-    # (YA) Modified 
 
     for input_zip in input_zips:
         if os.path.exists(input_zip):
