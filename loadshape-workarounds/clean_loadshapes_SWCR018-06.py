@@ -110,17 +110,26 @@ def clean_loadshapes_zip(zip_filename,
 if __name__ == '__main__':
     # Step 1. Modify the input filename(s) as needed
     input_zips = [
-        'CEDARS_LoadShape_Gro.zip'
+        'CEDARS_LoadShape_Com.zip' # found inside R3685, swcr015_postprocessed_outputs_2026-06-25.zip
     ]
 
     # Step 2. Modify this query based on TechID & BldgLoc exclusions specific to the measure.
     query_exclusions = """
-    DELETE FROM loadshapes_long WHERE TechID not in ('NE-Ref_Storage-VertDisplay-Glassdoor-LED-AirCond','NE-Ref_Storage-VertDisplay-Glassdoor-LED-EvapCond');
+    DELETE FROM loadshapes_long WHERE NOT (
+      (TechID in ('NE-Ref_Storage-VertDisplay-Glassdoor-LED-AirCond') and BldgLoc not in ('CZ15'))
+      OR (TechID in ('NE-Ref_Storage-VertDisplay-Glassdoor-LED-EvapCond') and BldgLoc in ('CZ15'))
+    );
+
+    INSERT INTO loadshapes_long
+    SELECT "Sector", "BldgType",
+    'New' as "BldgVint",
+    "BldgHVAC", "BldgLoc", "Type", "Source Year", "TechGroup", "TechType", "TechID", "Hour of Year", "UECproportion"
+    FROM "loadshapes_long";
     """
 
     # Enter list of assumed column names in the input file to raise an error if the assumption is wrong.
     expected_input_columns = ['Sector', 'BldgType', 'BldgVint', 'BldgHVAC', 'BldgLoc',
-        'Type (Whole Building or End Use)', 'Source Year', 'TechGroup',
+        'Type', 'Source Year', 'TechGroup',
         'TechType', 'TechID', 'Hour of Year', 'UECproportion']
     
     # Enter list of required output column names to raise an error if the data transformation fails to yield these columns.
@@ -134,16 +143,17 @@ if __name__ == '__main__':
     # To enter a constant value, enter the value in single quotes, e.g. 'Cap-Tons'.
     # Comment text on each line after a double dash is ignored.
 
-    query_transformation = f"""SELECT
+    query_transformation = f"""
+    SELECT
     "Sector" AS "Sector",
     "BldgType" AS "BldgType",
     "BldgVint" AS "BldgVint",
-    "BldgHVAC" AS "BldgHVAC", -- customize to match measure case BldgHVAC
+    'Any' AS "BldgHVAC", -- customize to match measure case BldgHVAC
     "BldgLoc" AS "BldgLoc",
     'Each' AS "NormUnit", -- use this line if the input CSV already has a column named "NormUnit"
     -- 'Cap-Tons' AS "NormUnit", -- uncomment this line if the input CSV does not have a column named "NormUnit"
-    "Type (Whole Building or End Use)" AS "Type (Whole Building or End Use)", -- use this line if the input CSV already has the column
-    -- "Type" AS "Type (Whole Building or End Use)", -- uncomment this line if "Type" column needs to be renamed in output
+    --"Type (Whole Building or End Use)" AS "Type (Whole Building or End Use)", -- use this line if the input CSV already has the column
+    "Type" AS "Type (Whole Building or End Use)", -- uncomment this line if "Type" column needs to be renamed in output
     "Source Year" AS "Source Year",
     'Ref_Storage' AS "TechGroup",
     'ReachIn' AS "TechType",
