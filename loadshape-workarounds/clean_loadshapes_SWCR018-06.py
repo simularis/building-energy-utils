@@ -24,6 +24,7 @@ To use this script:
 @Date: 2026-06-29
 
 2026-09-25 NF - Customized for SWCR018-06, assuming input data file(s) from SWCR015
+2026-10-01 NF - Duplicate from Ex vintage into New; replace BldgHVAC with 'Any' to match measure case
 """
 
 import zipfile
